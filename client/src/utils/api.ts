@@ -1,11 +1,17 @@
-export const requests = async (endPoint: string, headers: HeadersInit) => {
+export const requests = async (endPoint: string, headers?: HeadersInit) => {
   try {
-    const res = await fetch(`${endPoint}`, {
-      headers,
-    });
+    const res = headers
+      ? await fetch(`${endPoint}`, {
+          headers,
+        })
+      : await fetch(`${endPoint}`);
 
     if (!res.ok) {
-      throw new Error('서버의 상태가 이상합니다');
+      const {
+        status: { message, status_code },
+      } = await res.json();
+
+      throw new Error(`서버의 상태가 이상합니다. ${message}, status_code: ${status_code}`);
     }
 
     return await res.json();

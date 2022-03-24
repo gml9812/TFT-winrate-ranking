@@ -1,27 +1,74 @@
 import type { NextPage } from 'next';
+import { useState, useEffect } from 'react';
+import { requests } from '../utils';
+import { DATA } from '../mockDataBase';
 import styled from 'styled-components';
 
-const Button = styled.button`
-  border: 4px solid black;
-`;
+// 3분에 한번씩 getstaticprops 작동하고 posts 변화
+// posts 작동할 때마다 useEffect 작동(확인필요) => state 바꿈
+// state 내용 렌더링
 
-const Home: NextPage = ({ posts }) => {
-  console.log(posts);
-  return <Button type="button">hello</Button>;
+interface HomePageProps {
+  posts: {
+    summonerName: string;
+    averagePlacement: number;
+  }[];
+}
+
+const Home = ({ posts }: HomePageProps) => {
+  const [userByWinRate, setUserByWinRate] = useState([
+    {
+      userName: '',
+      winRate: 0,
+    },
+  ]);
+
+  useEffect(() => {}, [posts]);
+
+  return (
+    <div>
+      {posts.map((post, index) => {
+        return (
+          <div key={index}>
+            {post.summonerName}
+            {post.averagePlacement}
+          </div>
+        );
+      })}
+    </div>
+  );
 };
 
 export async function getStaticProps() {
-  // Call an external API endpoint to get posts.
-  // You can use any data fetching library
-  const res = await fetch('http://localhost:3000/api/win-rate/top');
-  const posts = await res.json();
+  const topPlayers = await requests('http://localhost:3000/api/win-rate/top-players');
 
-  // By returning { props: { posts } }, the Blog component
-  // will receive `posts` as a prop at build time
+  const searchPlayer = topPlayers[DATA.INDEX];
+
+  DATA.INDEX = DATA.INDEX === 300 ? 0 : DATA.INDEX + 1;
+
+  const placements = await requests(
+    `http://localhost:3000/api/win-rate/${searchPlayer.summonerId}`,
+  );
+
+  /* await Promise.all(
+    searchPlayers.map((challenger: { summonerId: string }) => {
+      return requests(`http://localhost:3000/api/win-rate/${challenger.summonerId}`);
+    }),
+  ); */
+
+  DATA.DATABASE.push({
+    summonerName: searchPlayer.summonerName,
+    averagePlacement: placements.reduce((prev: number, curr: number) => prev + curr) / 20,
+  });
+
+  console.log(DATA.INDEX);
+  console.log(DATA.DATABASE);
+
   return {
     props: {
-      posts,
+      posts: DATA.DATABASE,
     },
+    revalidate: 100,
   };
 }
 
