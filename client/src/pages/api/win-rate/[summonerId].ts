@@ -2,12 +2,6 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { requests } from '../../../utils';
 import { API } from '../../../commons';
 
-interface UserInfo {
-  summonerId: string;
-  summonerName: string;
-  leaguePoints: number;
-}
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse<number[]>) {
   const { summonerId } = req.query;
 

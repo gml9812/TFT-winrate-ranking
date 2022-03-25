@@ -5,7 +5,7 @@ export const API = {
     'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7,ja;q=0.6',
     'Accept-Charset': 'application/x-www-form-urlencoded; charset=UTF-8',
     Origin: 'https://developer.riotgames.com',
-    'X-Riot-Token': 'RGAPI-161d61eb-6da3-44b9-b8ee-d594725730bb',
+    'X-Riot-Token': 'RGAPI-9a9e2d91-bb5f-48fd-885a-a7475b15e4d4',
   },
   CURRENT_PATCH_VERSION: `Version 12.5.425.9171 (Feb 25 2022/17:50:27) [PUBLIC] <Releases/12.5>`,
 };
