@@ -1,36 +1,135 @@
+// request 처리 수정
+
 import appRoot from "app-root-path";
 import bodyParser from "body-parser";
 import express from "express";
+import axios, { AxiosResponse } from "axios";
 import { routes } from "./api/routes";
+import {
+  createUser,
+  findUser,
+  updateUser,
+  deleteUser,
+} from "./modules/database/schema/challengerUser";
+import { API } from "./commons";
+
+let INDEX = 0;
 
 const app = express();
 const PORT = 10100;
 
-app.set("trust proxy", 1); // trust first proxy
+app.set("trust proxy", 1);
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use("/api", routes); //=> will change to this
+app.use("/api", routes);
 
-app.use(function (req, res, next) {
-  res.status(404).render("404.pug", {});
-});
+const updateUserInfo = async () => {
+  try {
+    // 전체 challenger 리스트 받아오기
+
+    const krChallengerResponse = await axios({
+      url: `https://kr.api.riotgames.com/tft/league/v1/challenger`,
+      method: "GET",
+      headers: API.HEADER,
+    });
+    const krChallenger = krChallengerResponse.data;
+
+    const krChallengerEntries = krChallenger.entries;
+    krChallengerEntries.sort((a, b) =>
+      a.summonerName > b.summonerName
+        ? 1
+        : b.summonerName > a.summonerName
+        ? -1
+        : 0
+    );
+
+    // 이번 차례에 검색할 플레이어 받아오기
+    const searchPlayer = krChallengerEntries[INDEX];
+    INDEX = INDEX === 300 ? 0 : INDEX + 1;
+
+    // summoner Id로 검색
+    const { summonerId } = searchPlayer;
+
+    const summonerInfoResponse = await axios({
+      url: `https://kr.api.riotgames.com/tft/summoner/v1/summoners/${summonerId}`,
+      method: "GET",
+      headers: API.HEADER,
+    });
+    const summonerInfo = summonerInfoResponse.data;
+
+    const summonerPuuid = summonerInfo.puuid;
+
+    const matchNamesResponse = await axios({
+      url: `https://asia.api.riotgames.com/tft/match/v1/matches/by-puuid/${summonerPuuid}/ids?count=20`,
+      method: "GET",
+      headers: API.HEADER,
+    });
+    const matchNames = matchNamesResponse.data;
+
+    const matchDatas = await Promise.all(
+      matchNames.map((match: string) => {
+        return axios({
+          url: `https://asia.api.riotgames.com/tft/match/v1/matches/${match}`,
+          method: "GET",
+          headers: API.HEADER,
+        });
+      })
+    );
+
+    const placements = matchDatas.map(
+      (matchData: {
+        data: {
+          info: {
+            game_version: string;
+            participants: {
+              puuid: number;
+              placement: number;
+            }[];
+          };
+        };
+      }) => {
+        if (matchData.data.info.game_version !== API.CURRENT_PATCH_VERSION)
+          return 4; //평균등수 리턴
+
+        const place = matchData.data.info.participants.filter(
+          (participant: { puuid: number }) =>
+            participant.puuid === summonerPuuid
+        );
+
+        return place[0].placement;
+      }
+    );
+
+    // DB 수정
+    // 만약 이미 해당 소환사 존재하면 정보만 수정
+    const [, userInfo] = await findUser({
+      summonerName: searchPlayer.summonerName,
+    });
+    console.log(userInfo);
+
+    if (userInfo.length === 0) {
+      const updatedUser = await createUser({
+        summonerName: searchPlayer.summonerName,
+        averagePlacement:
+          placements.reduce((prev: number, curr: number) => prev + curr) / 20,
+      });
+    } else {
+      const updatedUser = await updateUser(
+        {
+          summonerName: searchPlayer.summonerName,
+        },
+        {
+          averagePlacement:
+            placements.reduce((prev: number, curr: number) => prev + curr) / 20,
+        }
+      );
+    }
+  } catch (e) {
+    console.log(e);
+  }
+};
+setInterval(updateUserInfo, 80000);
 
 export { app, PORT };
-
-//public은 html에서 사용될 정적 파일(css와 js, 아이콘과 폰트 등) 을 가져온다.
-//routers는 get을 받아 html로 구성된 signin, signup 페이지를 사용하도록 한다.
-
-//404 추가
-//session 추가, session이 유지되는 사이에는 웹페이지 나갔다 돌아와도 로그인 유지된다. **************
-
-//routers와 api는 get과 post를 수행한다.
-//이 때, 주어진 get,post에 따라 적절한 html&pug 페이지를 response로 반환한다. 해당 html&pug는 views 폴더에 존재한다.
-//views에서 사용할 js파일,폰트,이미지,css 등은 public 폴더에 존재한다.
-
-//여기서 js 파일은 webpack 사용하여 하나의 파일로 (.built.js) 통합되어 사용된다.
-//js 파일을 수정하기 위해서는 client 폴더에서 수정 마친 뒤, webpack 사용해 built.js 수정하면 된다.
-
-//####### routers의 session, TEST는 미구현
-//####### client 폴더의 spring.styl의 정체는?

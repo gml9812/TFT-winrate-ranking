@@ -3,9 +3,7 @@ import { requests } from '../utils';
 import { API } from '../commons';
 import { DATA } from '../mockDataBase';
 
-// 3분에 한번씩 getstaticprops 작동하고 posts 변화
-// posts 작동할 때마다 useEffect 작동(확인필요) => state 바꿈
-// state 내용 렌더링
+// 100초마다 API에 POST 날린다. POST받은 API는 db 업데이트한다.
 
 interface HomePageProps {
   posts: {
@@ -30,6 +28,7 @@ const Home = ({ posts }: HomePageProps) => {
 };
 
 export async function getStaticProps() {
+  console.log(DATA.INDEX);
   // 전체 challenger 리스트 받아오기
   const krChallenger = await requests(
     `https://kr.api.riotgames.com/tft/league/v1/challenger`,
@@ -81,8 +80,9 @@ export async function getStaticProps() {
     summonerName: searchPlayer.summonerName,
     averagePlacement: placements.reduce((prev: number, curr: number) => prev + curr) / 20,
   });
+  DATA.DATABASE.sort((a, b) => a.averagePlacement - b.averagePlacement);
 
-  console.log(DATA.DATABASE);
+  console.log(DATA.DATABASE); //
 
   return {
     props: {

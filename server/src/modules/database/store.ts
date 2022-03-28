@@ -1,15 +1,14 @@
 //load nedb
-import DataStore from 'nedb'
-import { UserInfo } from './schema/user'
+import DataStore from "nedb";
+import { ChallengerUserInfo } from "./schema/challengerUser";
 
 function createDataStore<T = {}>(schema: string, autoload = true) {
-  const dataStore = new DataStore<T>({ filename: `store/${schema}`, autoload })
+  const dataStore = new DataStore<T>({ filename: `store/${schema}`, autoload });
 
-  return dataStore
+  return dataStore;
 }
 
 //make db
-const userStore = createDataStore<UserInfo>('user')
+const krChallengerStore = createDataStore<ChallengerUserInfo>("krChallenger");
 
-
-export { userStore }
+export { krChallengerStore };

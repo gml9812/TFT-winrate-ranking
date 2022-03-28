@@ -1,9 +1,9 @@
 import express from "express";
 
-import { userRouter } from "./user";
+import { winRateRouter } from "./win-rate";
 
 const router = express.Router();
 
-router.use("/user", userRouter);
+router.use("/win-rate", winRateRouter);
 
 export { router as routes };
