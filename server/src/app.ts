@@ -62,10 +62,11 @@ const updateUserInfo = async () => {
     const summonerPuuid = summonerInfo.puuid;
 
     const matchNamesResponse = await axios({
-      url: `https://asia.api.riotgames.com/tft/match/v1/matches/by-puuid/${summonerPuuid}/ids?count=20`,
+      url: `https://asia.api.riotgames.com/tft/match/v1/matches/by-puuid/${summonerPuuid}/ids?count=10`,
       method: "GET",
       headers: API.HEADER,
     });
+    // 원래 20인데 일시적으로 10으로 낮추었다.
     const matchNames = matchNamesResponse.data;
 
     const matchDatas = await Promise.all(
@@ -112,8 +113,9 @@ const updateUserInfo = async () => {
     if (userInfo.length === 0) {
       const updatedUser = await createUser({
         summonerName: searchPlayer.summonerName,
+        summonerPuuid,
         averagePlacement:
-          placements.reduce((prev: number, curr: number) => prev + curr) / 20,
+          placements.reduce((prev: number, curr: number) => prev + curr) / 10,
       });
     } else {
       const updatedUser = await updateUser(
@@ -121,8 +123,11 @@ const updateUserInfo = async () => {
           summonerName: searchPlayer.summonerName,
         },
         {
-          averagePlacement:
-            placements.reduce((prev: number, curr: number) => prev + curr) / 20,
+          $set: {
+            averagePlacement:
+              placements.reduce((prev: number, curr: number) => prev + curr) /
+              10,
+          },
         }
       );
     }

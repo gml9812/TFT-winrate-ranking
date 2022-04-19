@@ -9,6 +9,7 @@ import { krChallengerStore } from "../store";
 
 export type ChallengerUserInfo = {
   summonerName: string;
+  summonerPuuid: string;
   averagePlacement: number;
 };
 
