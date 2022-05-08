@@ -21,7 +21,6 @@ const Home = ({ topPlayerList }: HomePageProps) => {
   const [showingPlayerList, setShowingPlayerList] = useState<PlayerInfo[]>([
     { summonerName: '', averagePlacement: 1 },
   ]);
-  // const loader = useRef(null);
 
   const handleObserver = useCallback(() => {
     setLoading(true);
@@ -33,6 +32,14 @@ const Home = ({ topPlayerList }: HomePageProps) => {
     rootMargin: '20px',
     threshold: 0.5,
   };
+
+  //////
+  const homeRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    console.log('fa');
+    homeRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+  //////
 
   const [setTarget] = useInfiniteScroll(handleObserver, option);
 
@@ -56,6 +63,7 @@ const Home = ({ topPlayerList }: HomePageProps) => {
           );
         })}
       </div>
+      <div ref={homeRef}>test</div>
       {loading && <p>Loading...</p>}
       {error && <p>Error!</p>}
       <div ref={setTarget} />
